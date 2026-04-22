@@ -1,15 +1,20 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 
+	"micro-es/internal/db"
 	"micro-es/internal/index"
 	"micro-es/internal/query"
 )
 
 // GlobalIndex, sunucu çalıştığı sürece verilerimizi RAM'de tutacak olan ortak nesnemizdir.
 var GlobalIndex = index.NewIndex()
+
+// DB, veritabanı bağlantımızı tutan global değişkendir.
+var DB *sql.DB
 
 // AddDocumentRequest, kullanıcının bize göndereceği JSON verisinin yapısıdır.
 type AddDocumentRequest struct {
@@ -43,6 +48,16 @@ func AddDocumentHandler(w http.ResponseWriter, r *http.Request) {
 		ID:   req.ID,
 		Text: req.Text,
 	}
+
+	// 1. Veriyi Kalıcı Olarak Veritabanına Yaz (Source of Truth)
+	if DB != nil {
+		if err := db.SaveDocument(DB, doc); err != nil {
+			http.Error(w, "Veritabanı hatası", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// 2. Veriyi Hızlı Arama İçin RAM'e (Ters Dizin) Ekle (Search Engine)
 	GlobalIndex.Add(doc)
 
 	// Başarı cevabı dön
