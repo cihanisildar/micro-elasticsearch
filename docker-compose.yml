@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  micro-es:
+    build: .
+    container_name: micro-es-engine
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    # İleride sisteme loglama veya dışarıdan dosya eklersek volume vs. buraya eklenebilir.
