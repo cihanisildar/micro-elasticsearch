@@ -1,0 +1,16 @@
+# Binaries
+bin/
+micro-es
+*.exe
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+
+# docs
+/docs
