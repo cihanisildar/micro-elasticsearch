@@ -62,3 +62,15 @@ func (idx *Index) GetDocument(id string) (Document, bool) {
 	doc, exists := idx.docs[id]
 	return doc, exists
 }
+
+// GetAllDocuments, sistemdeki tüm dokümanları liste halinde döndürür.
+func (idx *Index) GetAllDocuments() []Document {
+	idx.mu.RLock()
+	defer idx.mu.RUnlock()
+	
+	var allDocs []Document
+	for _, doc := range idx.docs {
+		allDocs = append(allDocs, doc)
+	}
+	return allDocs
+}

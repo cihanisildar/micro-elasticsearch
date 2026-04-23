@@ -204,13 +204,16 @@
                    class="search-input" 
                    placeholder="Type to search... (e.g. go, docker, algoritma)" 
                    autocomplete="off"
-                   hx-get="/api/search-html" 
-                   hx-trigger="keyup changed delay:250ms" 
+                   hx-get="/api/search-html"
+                   hx-trigger="load, keyup changed delay:250ms"
                    hx-target="#resultsContainer">
         </div>
 
-        <div class="results" id="resultsContainer">
-            
+        <div class="results"
+             id="resultsContainer"
+             hx-get="/api/search-html"
+             hx-trigger="every 5s"
+             hx-include="#searchInput">
         </div>
     </div>
 </body>

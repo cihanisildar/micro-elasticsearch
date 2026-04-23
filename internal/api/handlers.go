@@ -106,12 +106,21 @@ func SearchHTMLHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	q := r.URL.Query().Get("q")
+	
+	var results []query.SearchResult
+	
 	if q == "" {
-		w.Write([]byte(""))
-		return
+		// Arama boşsa tüm dokümanları (varsayılan 0 skoruyla) göster
+		allDocs := GlobalIndex.GetAllDocuments()
+		for _, doc := range allDocs {
+			results = append(results, query.SearchResult{
+				Document: doc,
+				Score:    0.0,
+			})
+		}
+	} else {
+		results = query.Search(GlobalIndex, q)
 	}
-
-	results := query.Search(GlobalIndex, q)
 
 	if len(results) == 0 {
 		w.Write([]byte(`<div class="no-results">Aradığınız kelimeye uygun doküman bulunamadı. 🔍</div>`))
@@ -121,7 +130,7 @@ func SearchHTMLHandler(w http.ResponseWriter, r *http.Request) {
 	// Kartların HTML Şablonu
 	const tmplHTML = `
 		{{range $index, $item := .}}
-		<div class="result-card" style="animation-delay: {{$index | mul 0.08}}s;">
+		<div class="result-card" style="animation-delay: {{mul $index 0.08}}s;">
 			<div class="result-text">{{highlight $item.Document.Text}}</div>
 			<div class="result-meta">
 				<div class="score-badge">Score: {{printf "%.4f" $item.Score}}</div>
@@ -137,6 +146,9 @@ func SearchHTMLHandler(w http.ResponseWriter, r *http.Request) {
 			return float64(a) * b
 		},
 		"highlight": func(text string) template.HTML {
+			if q == "" {
+				return template.HTML(text)
+			}
 			terms := strings.Fields(q)
 			highlighted := text
 			for _, term := range terms {
