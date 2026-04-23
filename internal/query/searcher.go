@@ -16,7 +16,6 @@ type SearchResult struct {
 
 // Search, verilen arama terimine göre dokümanları puanlar ve sıralar.
 func Search(idx *index.Index, query string) []SearchResult {
-	// 1. Arama metnini kelimelere ayır (örn: "Kırmızı Araba" -> ["kırmızı", "araba"])
 	tokens := analyzer.Analyze(query)
 	if len(tokens) == 0 {
 		return nil
@@ -25,7 +24,6 @@ func Search(idx *index.Index, query string) []SearchResult {
 	docScores := make(map[string]float64)
 	totalDocs := float64(idx.TotalDocs())
 
-	// 2. Her bir kelime için TF-IDF hesapla
 	for _, token := range tokens {
 		matchedDocIDs := idx.GetDocIDs(token)
 		if len(matchedDocIDs) == 0 {
@@ -62,7 +60,6 @@ func Search(idx *index.Index, query string) []SearchResult {
 		}
 	}
 
-	// 3. Puanlanmış dokümanları listeye çevir
 	var results []SearchResult
 	for docID, score := range docScores {
 		if doc, exists := idx.GetDocument(docID); exists {
@@ -73,7 +70,6 @@ func Search(idx *index.Index, query string) []SearchResult {
 		}
 	}
 
-	// 4. Skorlara göre büyükten küçüğe sırala (Ranking)
 	sort.Slice(results, func(i, j int) bool {
 		return results[i].Score > results[j].Score
 	})

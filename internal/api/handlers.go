@@ -3,7 +3,10 @@ package api
 import (
 	"database/sql"
 	"encoding/json"
+	"html/template"
 	"net/http"
+	"regexp"
+	"strings"
 
 	"micro-es/internal/db"
 	"micro-es/internal/index"
@@ -49,7 +52,6 @@ func AddDocumentHandler(w http.ResponseWriter, r *http.Request) {
 		Text: req.Text,
 	}
 
-	// 1. Veriyi Kalıcı Olarak Veritabanına Yaz (Source of Truth)
 	if DB != nil {
 		if err := db.SaveDocument(DB, doc); err != nil {
 			http.Error(w, "Veritabanı hatası", http.StatusInternalServerError)
@@ -57,7 +59,6 @@ func AddDocumentHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// 2. Veriyi Hızlı Arama İçin RAM'e (Ters Dizin) Ekle (Search Engine)
 	GlobalIndex.Add(doc)
 
 	// Başarı cevabı dön
@@ -95,4 +96,63 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	// Sonuçları JSON olarak dön
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(results)
+}
+
+// SearchHTMLHandler, HTMX istekleri için JSON yerine Go Templates kullanarak doğrudan HTML döndürür.
+func SearchHTMLHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Sadece GET istegi kabul edilir", http.StatusMethodNotAllowed)
+		return
+	}
+
+	q := r.URL.Query().Get("q")
+	if q == "" {
+		w.Write([]byte(""))
+		return
+	}
+
+	results := query.Search(GlobalIndex, q)
+
+	if len(results) == 0 {
+		w.Write([]byte(`<div class="no-results">Aradığınız kelimeye uygun doküman bulunamadı. 🔍</div>`))
+		return
+	}
+
+	// Kartların HTML Şablonu
+	const tmplHTML = `
+		{{range $index, $item := .}}
+		<div class="result-card" style="animation-delay: {{$index | mul 0.08}}s;">
+			<div class="result-text">{{highlight $item.Document.Text}}</div>
+			<div class="result-meta">
+				<div class="score-badge">Score: {{printf "%.4f" $item.Score}}</div>
+				<div class="doc-id">ID: {{$item.Document.ID}}</div>
+			</div>
+		</div>
+		{{end}}
+	`
+
+	// Animasyon gecikmesi ve vurgulama için yardımcı fonksiyonlar
+	funcMap := template.FuncMap{
+		"mul": func(a int, b float64) float64 {
+			return float64(a) * b
+		},
+		"highlight": func(text string) template.HTML {
+			terms := strings.Fields(q)
+			highlighted := text
+			for _, term := range terms {
+				re := regexp.MustCompile(`(?i)(` + regexp.QuoteMeta(term) + `)`)
+				highlighted = re.ReplaceAllString(highlighted, `<span class="highlight">$1</span>`)
+			}
+			return template.HTML(highlighted)
+		},
+	}
+
+	tmpl, err := template.New("results").Funcs(funcMap).Parse(tmplHTML)
+	if err != nil {
+		http.Error(w, "Şablon hatası", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	tmpl.Execute(w, results)
 }

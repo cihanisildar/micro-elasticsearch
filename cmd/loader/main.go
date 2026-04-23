@@ -15,7 +15,6 @@ type Document struct {
 	Text string `json:"text"`
 }
 
-// sampleData, sisteme test amacıyla yükleyeceğimiz 10 adet örnek makale/cümledir.
 var sampleData = []Document{
 	{ID: "doc1", Text: "Go dili ile yüksek performanslı arama motoru geliştirmek oldukça keyiflidir."},
 	{ID: "doc2", Text: "Elasticsearch, Lucene tabanlı dağıtık bir arama ve analiz motorudur."},
@@ -52,7 +51,6 @@ func main() {
 		}
 		resp.Body.Close()
 		
-		// İstekleri saniyede yüzlerce atmamak için çok ufak bir mola veriyoruz
 		time.Sleep(20 * time.Millisecond)
 	}
 	

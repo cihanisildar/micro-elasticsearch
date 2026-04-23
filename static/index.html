@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Micro-ES Search</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        
+        :root {
+            --bg-color: #0f172a;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --primary: #38bdf8;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            
+            background-image: radial-gradient(circle at top right, #1e1b4b, transparent 40%),
+                              radial-gradient(circle at bottom left, #0c4a6e, transparent 40%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            padding: 4rem 2rem;
+            box-sizing: border-box;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 600;
+            margin: 0;
+            
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            margin-top: 0.5rem;
+            font-weight: 300;
+        }
+
+        .search-box {
+            position: relative;
+            width: 100%;
+            margin-bottom: 3rem;
+            animation: fadeIn 1s ease 0.3s both;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1.2rem 1.8rem;
+            font-size: 1.2rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            color: var(--text-main);
+            
+            backdrop-filter: blur(12px);
+            outline: none;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .search-input::placeholder {
+            color: #64748b;
+        }
+
+        .results {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        .result-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(12px);
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            opacity: 0;
+            transform: translateY(15px);
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        @keyframes fadeInUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-card:hover {
+            transform: translateY(-4px) scale(1.01);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.3);
+            border-color: rgba(56, 189, 248, 0.4);
+            background: rgba(30, 41, 59, 0.85);
+        }
+
+        .result-text {
+            font-size: 1.15rem;
+            line-height: 1.6;
+            flex: 1;
+            padding-right: 2rem;
+            font-weight: 300;
+        }
+
+        .result-meta {
+            text-align: right;
+            min-width: 110px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .score-badge {
+            display: inline-block;
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--primary);
+            padding: 0.4rem 1rem;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+
+        .doc-id {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: rgba(0,0,0,0.2);
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+        }
+
+        .no-results {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            padding: 3rem;
+            background: var(--glass-bg);
+            border-radius: 16px;
+            border: 1px dashed var(--glass-border);
+        }
+
+        .highlight {
+            color: #38bdf8;
+            font-weight: 600;
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+        }
+    </style>
+    
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Micro-ES</h1>
+            <p class="subtitle">High-Performance In-Memory Search Engine</p>
+        </div>
+        
+        <div class="search-box">
+            
+            <input type="text" 
+                   name="q"
+                   id="searchInput" 
+                   class="search-input" 
+                   placeholder="Type to search... (e.g. go, docker, algoritma)" 
+                   autocomplete="off"
+                   hx-get="/api/search-html" 
+                   hx-trigger="keyup changed delay:250ms" 
+                   hx-target="#resultsContainer">
+        </div>
+
+        <div class="results" id="resultsContainer">
+            
+        </div>
+    </div>
+</body>
+</html>

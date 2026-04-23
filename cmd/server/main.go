@@ -11,7 +11,6 @@ import (
 )
 
 func main() {
-	// 1. Veritabanına Bağlan ve Verileri RAM'e Yükle (Index Rebuilding)
 	dbUrl := os.Getenv("DB_URL")
 	if dbUrl != "" {
 		database, err := db.InitDB(dbUrl)
@@ -33,9 +32,11 @@ func main() {
 		fmt.Println("⚠️ DB_URL tanımlanmamış, sadece RAM üzerinde (geçici) çalışıyor.")
 	}
 
-	// 2. API Endpoint'lerini Tanımla
 	http.HandleFunc("/api/documents", api.AddDocumentHandler)
 	http.HandleFunc("/api/search", api.SearchHandler)
+	http.HandleFunc("/api/search-html", api.SearchHTMLHandler) // HTMX Endpoint'i
+
+	http.Handle("/", http.FileServer(http.Dir("./static")))
 
 	// Sunucuyu Başlat
 	port := ":8080"

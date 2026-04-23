@@ -7,14 +7,10 @@ import (
 
 // Index, arama motorumuzun kalbidir. Tüm veriler burada RAM'de tutulur.
 type Index struct {
-	// mu, eşzamanlı veri yazma/okuma işlemlerinde çakışmayı (race condition) engeller.
 	mu sync.RWMutex
 
-	// docs, orijinal metinleri ID'leri ile saklar (örn: "doc1" -> {ID: "doc1", Text: "..."})
 	docs map[string]Document
 
-	// invertedIndex (Ters Dizin), kelimelerden doküman ID'lerine giden haritadır.
-	// Örn: "araba" -> ["doc1", "doc2"]
 	invertedIndex map[string][]string
 }
 
@@ -31,20 +27,15 @@ func (idx *Index) Add(doc Document) {
 	idx.mu.Lock()
 	defer idx.mu.Unlock()
 
-	// 1. Orijinal dokümanı kaydet
 	idx.docs[doc.ID] = doc
 
-	// 2. Metni kelimelere (tokenlara) ayır
 	tokens := analyzer.Analyze(doc.Text)
 
-	// 3. Bir kelime dokümanda 5 kere geçse bile, inverted index'e "bu dokümanda var" 
-	// bilgisini sadece 1 kez eklemeliyiz. Bunun için tokenları tekilleştiriyoruz.
 	uniqueTokens := make(map[string]bool)
 	for _, token := range tokens {
 		uniqueTokens[token] = true
 	}
 
-	// 4. Ters Dizini (Inverted Index) güncelle
 	for token := range uniqueTokens {
 		idx.invertedIndex[token] = append(idx.invertedIndex[token], doc.ID)
 	}
