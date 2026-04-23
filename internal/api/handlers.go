@@ -3,6 +3,7 @@ package api
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"net/http"
 	"regexp"
@@ -96,6 +97,43 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	// Sonuçları JSON olarak dön
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(results)
+}
+
+// sampleDocuments, UI üzerinden yüklenebilecek örnek veri setidir.
+var sampleDocuments = []index.Document{
+	{ID: "doc1", Text: "Go dili ile yüksek performanslı arama motoru geliştirmek oldukça keyiflidir."},
+	{ID: "doc2", Text: "Elasticsearch, Lucene tabanlı dağıtık bir arama ve analiz motorudur."},
+	{ID: "doc3", Text: "Docker kullanarak projelerimizi izole bir şekilde saniyeler içinde ayağa kaldırabiliriz."},
+	{ID: "doc4", Text: "TF-IDF algoritması kelimelerin doküman içindeki ve tüm veri setindeki önemini hesaplar."},
+	{ID: "doc5", Text: "Go dili concurrency (eşzamanlılık) konusunda goroutine'ler sayesinde çok başarılıdır."},
+	{ID: "doc6", Text: "Arama algoritmalarında ters dizin (inverted index) kullanmak performansı O(1) seviyesine yaklaştırır."},
+	{ID: "doc7", Text: "Mikroservis mimarisinde Docker ve Kubernetes ikilisi modern yazılımın vazgeçilmezidir."},
+	{ID: "doc8", Text: "Veri yapıları ve algoritmalar mülakatlarda en çok sorulan konuların başında gelir."},
+	{ID: "doc9", Text: "Go dilinin standart kütüphanesi HTTP sunucusu kurmak için dış bağımlılık olmadan yeterince güçlüdür."},
+	{ID: "doc10", Text: "Kırmızı arabalar çok hızlı gider ama mavi arabalar daha konforludur."},
+}
+
+// SeedHandler, POST /api/seed isteğini karşılar ve örnek 10 dokümanı sisteme yükler.
+func SeedHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Sadece POST istegi kabul edilir", http.StatusMethodNotAllowed)
+		return
+	}
+
+	loaded := 0
+	for _, doc := range sampleDocuments {
+		if DB != nil {
+			if err := db.SaveDocument(DB, doc); err != nil {
+				continue
+			}
+		}
+		GlobalIndex.Add(doc)
+		loaded++
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`<span class="seed-success">✅ ` + fmt.Sprintf("%d", loaded) + ` doküman yüklendi!</span>`))
 }
 
 // SearchHTMLHandler, HTMX istekleri için JSON yerine Go Templates kullanarak doğrudan HTML döndürür.

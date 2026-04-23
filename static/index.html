@@ -185,6 +185,48 @@
             font-weight: 600;
             text-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
         }
+
+        .seed-section {
+            text-align: center;
+            margin-bottom: 2rem;
+            animation: fadeIn 1s ease 0.5s both;
+        }
+
+        .seed-btn {
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            color: var(--primary);
+            padding: 0.65rem 1.6rem;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 0.3px;
+        }
+
+        .seed-btn:hover {
+            background: rgba(56, 189, 248, 0.2);
+            box-shadow: 0 0 18px rgba(56, 189, 248, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .seed-btn:active {
+            transform: translateY(0);
+        }
+
+        .seed-success {
+            color: #4ade80;
+            font-size: 0.9rem;
+            margin-left: 0.8rem;
+            vertical-align: middle;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
     </style>
     
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
@@ -196,6 +238,16 @@
             <p class="subtitle">High-Performance In-Memory Search Engine</p>
         </div>
         
+        <div class="seed-section">
+            <button class="seed-btn"
+                    hx-post="/api/seed"
+                    hx-target="#seedStatus"
+                    hx-swap="innerHTML">
+                Load Sample Data (10 docs)
+            </button>
+            <span id="seedStatus"></span>
+        </div>
+
         <div class="search-box">
             
             <input type="text" 

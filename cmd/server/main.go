@@ -34,7 +34,8 @@ func main() {
 
 	http.HandleFunc("/api/documents", api.AddDocumentHandler)
 	http.HandleFunc("/api/search", api.SearchHandler)
-	http.HandleFunc("/api/search-html", api.SearchHTMLHandler) // HTMX Endpoint'i
+	http.HandleFunc("/api/search-html", api.SearchHTMLHandler)
+	http.HandleFunc("/api/seed", api.SeedHandler)
 
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 
